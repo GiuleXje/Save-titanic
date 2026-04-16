@@ -21,7 +21,7 @@ graph LR
     MCU ---|RF| ANT[Antena BLE]
     BTN[Butoane Tactile] -->|GPIO| MCU
     SWD[TC2030 SWD Debug] <-->|SWD| MCU
-
+```
 
 Componentă	Descriere	Cod JLC	Link JLC Parts	Datasheet
 nRF52840-QIAA-R	MCU Bluetooth 5.4, ARM Cortex-M4F	C190794	Link JLC	Link
