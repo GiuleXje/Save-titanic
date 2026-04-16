@@ -1,23 +1,41 @@
 ```mermaid
-graph LR
-    %% Alimentare
-    USB[USB-C Connector] -->|5V| BQ[BQ25180 LiPo Charger]
-    BQ -->|Incarcare| BAT[LiPo Battery 3.7V]
-    BAT --> MAX[MAX17048 Fuel Gauge]
-    BAT --> RT[RT6160 DC/DC Converter]
-    
-    %% Conexiuni Power catre MCU
-    RT -->|3.3V| MCU[nRF52840 MCU + BLE]
+graph TD
+    %% Definește grupuri funcționale
+    subgraph Power[Power Management]
+        USB_C[USB-C Input] -->|5V| Charger[MCP73832 Charger]
+        Charger -->|Charge| Battery[LiPo 250mAh Battery\n32.5x21x5.5mm]
+        Battery -->|Power| Regulator[3.3V Regulator]
+        Regulator -->|3.3V| Rail[Power Rail]
+    end
 
-    %% I2C Bus
-    BQ <-->|I2C| MCU
-    MAX <-->|I2C| MCU
-    RT <-->|I2C| MCU
-    IMU[BMA421 IMU] <-->|I2C| MCU
-    HAPTIC[DRV2605 Haptic Driver] <-->|I2C| MCU
+    subgraph Processing[Processing Unit]
+        MCU[nRF52840 MCU\nARM Cortex-M4F, BLE]
+    end
 
-    %% Alte interfete
-    MCU -->|SPI| EPD[E-paper Display]
-    MCU ---|RF| ANT[Antena BLE]
-    BTN[Butoane Tactile] -->|GPIO| MCU
-    SWD[TC2030 SWD Debug] <-->|SWD| MCU
+    subgraph Sensing[Sensing Layer]
+        PM_Sensor[PMSA003 PM Sensor\nPM1.0, PM2.5, PM10]
+        CO2_Sensor[MH-Z19B CO2 Sensor\nCO2 NDIR]
+        Env_Sensor[BME680 Env Sensor\nVOC, Temp, Humidity, Pressure]
+        Buttons[Buttons\nGPIO x3]
+    end
+
+    subgraph Output[Output/HMI]
+        Display[1.54" E-Ink Display\nSPI, 200x200px]
+        Shaker[Haptic Shaker\nERM Motor]
+    end
+
+    %% Conexiuni de Alimentare (Linii întrerupte)
+    Rail -.->|3.3V| MCU
+    Rail -.->|3.3V| PM_Sensor
+    Rail -.->|3.3V| CO2_Sensor
+    Rail -.->|3.3V| Env_Sensor
+    Rail -.->|3.3V| Display
+    Rail -.->|3.3V| Shaker
+
+    %% Conexiuni de Date (Linii solide)
+    MCU -->|SPI| Display
+    MCU ---|I2C shared bus| Env_Sensor
+    MCU ---|I2C shared bus| Shaker
+    MCU <-->|UART serial| PM_Sensor
+    MCU <-->|UART serial| CO2_Sensor
+    MCU <-->|GPIO| Buttons
